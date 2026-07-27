@@ -508,6 +508,13 @@ impl CaptureClipboardUseCase {
             // ("disable history"), each local capture replaces the most-recent
             // entry in place instead of appending a new row. This keeps exactly
             // one entry in the database at all times.
+            //
+            // Inbound (P2P / mobile) entries are NOT replaced here because the
+            // inbound pipeline binds a pre-allocated `entry_id` to receive-
+            // attempt tracking; overwriting it would break delivery accounting.
+            // Instead, inbound entries are cleaned up by the retention cleanup
+            // task which honours the same `ByAge { max_age: 0 }` policy and
+            // evicts all but the newest entry shortly after capture.
             let (commit_mode, preset_entry_id) =
                 if origin == ClipboardChangeOrigin::LocalCapture && commit_mode == CommitMode::Create
                 {
